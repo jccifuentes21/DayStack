@@ -19,22 +19,23 @@ There is a small URL chicken-and-egg: Render needs your Vercel origin for CORS, 
 3. On the project home screen, click **Connect** (top of the page, not under Settings).
 4. In the Connect panel:
    - **Type:** Postgres
-   - **Method:** **Session pooler** (port `5432`) — Render outbound traffic is IPv4-friendly; use this if **Direct connection** fails
+   - **Method:** **Session pooler** (port `5432`) — **required for Render** (Render free tier cannot reach Supabase **Direct connection**, which uses IPv6)
    - **Format:** **URI**
 5. Copy the connection string. Replace the placeholder password with your real **database password**.  
    If you forgot it: **Project Settings** (gear) → **Database** → **Reset database password**, then copy the URI again from **Connect**.
-
-Example (direct; your host will differ):
-
-```
-postgresql://postgres:[YOUR-PASSWORD]@db.abcdefghijklmnopqrst.supabase.co:5432/postgres
-```
-
-Session pooler example:
+6. Append SSL if the URI does not already include query params:
 
 ```
-postgres://postgres.[project-ref]:[YOUR-PASSWORD]@aws-0-[region].pooler.supabase.com:5432/postgres
+?sslmode=require
 ```
+
+Example session pooler URI (yours will differ):
+
+```
+postgres://postgres.[project-ref]:[YOUR-PASSWORD]@aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require
+```
+
+**Do not use Direct connection** (`db.*.supabase.co`) on Render. You will see errors like `dial tcp [2600:...]:5432: network is unreachable` because that hostname resolves to IPv6.
 
 Do not use **Transaction pooler** (port `6543`) for this app.
 
@@ -96,8 +97,11 @@ The repo includes a root `render.yaml`. In the Render dashboard: **New +** → *
 
 ### Troubleshooting DB connection
 
-- Append `?sslmode=require` to `DATABASE_URL` if `lib/pq` fails SSL handshake.
-- If direct connection fails from Render, use **Connect → Session pooler** on Supabase.
+| Error | Fix |
+|---|---|
+| `dial tcp [2600:...]:5432: network is unreachable` | You used **Direct connection**. Switch `DATABASE_URL` on Render to **Connect → Session pooler** (IPv4). Redeploy. |
+| SSL / certificate errors | Add `?sslmode=require` to the end of `DATABASE_URL`. |
+| `password authentication failed` | Reset DB password in Supabase, update `DATABASE_URL` on Render. |
 
 ---
 
