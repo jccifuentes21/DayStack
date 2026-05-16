@@ -3,103 +3,101 @@
 | Layer | Provider |
 |---|---|
 | Database | [Supabase](https://supabase.com) (PostgreSQL) |
-| Backend | [Fly.io](https://fly.io) (Go API) |
+| Backend | [Render](https://render.com) (Go API) |
 | Frontend | [Vercel](https://vercel.com) (React/Vite) |
 
-There is a small chicken-and-egg between URLs: Fly needs your Vercel origin for CORS, and Vercel needs the Fly API URL. Deploy in the order below: Supabase → Fly → Vercel → tighten CORS on Fly.
+Deploy order: **Supabase → Render → Vercel → lock down CORS** on Render.
+
+There is a small URL chicken-and-egg: Render needs your Vercel origin for CORS, and Vercel needs the Render API URL. Use `ALLOWED_ORIGIN=*` on Render until Vercel is live, then tighten it.
 
 ---
 
 ## 1. Supabase — Database
 
-1. Sign in at [supabase.com](https://supabase.com) and **New project** (pick a region close to your Fly region).
-2. Wait for the project to finish provisioning.
-3. Open **Project Settings → Database**.
-4. Under **Connection string**, choose **URI** and copy the **Direct connection** string (port `5432`).  
-   Use this for the Go API: long-lived process, migrations on boot.
-5. Replace `[YOUR-PASSWORD]` with the database password you set at project creation.
+1. Sign in at [supabase.com](https://supabase.com) and create a **New project** (pick a region close to your Render region, e.g. US East).
+2. Wait until the project finishes provisioning.
+3. On the project home screen, click **Connect** (top of the page, not under Settings).
+4. In the Connect panel:
+   - **Type:** Postgres
+   - **Method:** **Session pooler** (port `5432`) — Render outbound traffic is IPv4-friendly; use this if **Direct connection** fails
+   - **Format:** **URI**
+5. Copy the connection string. Replace the placeholder password with your real **database password**.  
+   If you forgot it: **Project Settings** (gear) → **Database** → **Reset database password**, then copy the URI again from **Connect**.
 
-Example shape (yours will differ):
-
-```
-postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:5432/postgres
-```
-
-or the direct host:
+Example (direct; your host will differ):
 
 ```
-postgresql://postgres:[password]@db.[project-ref].supabase.co:5432/postgres
+postgresql://postgres:[YOUR-PASSWORD]@db.abcdefghijklmnopqrst.supabase.co:5432/postgres
 ```
 
-Keep this secret. You will pass it to Fly as `DATABASE_URL` in the next step.
+Session pooler example:
 
-**Optional:** In **Database → Extensions**, you do not need anything extra for DayStack; plain Postgres is enough.
+```
+postgres://postgres.[project-ref]:[YOUR-PASSWORD]@aws-0-[region].pooler.supabase.com:5432/postgres
+```
+
+Do not use **Transaction pooler** (port `6543`) for this app.
+
+Keep the URI secret. You will set it as `DATABASE_URL` on Render.
+
+DayStack only needs Postgres. You do not need Supabase API keys or client libraries for this deploy.
 
 ---
 
-## 2. Fly.io — Backend
+## 2. Render — Backend
 
-Install the [Fly CLI](https://fly.io/docs/hands-on/install-flyctl/) and log in:
+### Option A — Dashboard (recommended first time)
 
-```bash
-fly auth login
-```
+1. Sign in at [render.com](https://render.com) (Hobby workspace is $0/month).
+2. **New +** → **Web Service** → connect your `DayStack` GitHub repo.
+3. Configure:
 
-From the repo root:
+| Setting | Value |
+|---|---|
+| Name | `daystack-api` (or similar) |
+| Region | Close to Supabase |
+| Branch | `main` (or your default) |
+| Root Directory | `backend` |
+| Runtime | **Go** |
+| Build Command | `go build -o server .` |
+| Start Command | `./server` |
+| Instance Type | **Free** |
 
-```bash
-cd backend
-fly launch
-```
+4. **Environment** → add:
 
-When prompted:
+| Key | Value |
+|---|---|
+| `DATABASE_URL` | Your Supabase URI (see SSL note below) |
+| `ALLOWED_ORIGIN` | `*` (temporary) |
 
-- Use the existing `fly.toml` (or let Fly create one).
-- **App name:** pick a unique name (e.g. `daystack-api`); update `app` in `fly.toml` if it changes.
-- **Region:** same region family as Supabase when possible (e.g. `iad` for US East).
-- **Postgres:** **No** (database is on Supabase).
-- **Deploy now:** you can say **No** until secrets are set.
+Render injects `PORT` automatically; the app reads it from the environment.
 
-Set secrets (paste your Supabase URI for `DATABASE_URL`):
-
-```bash
-fly secrets set \
-  DATABASE_URL='postgresql://postgres:...@db....supabase.co:5432/postgres' \
-  ALLOWED_ORIGIN='*'
-```
-
-`ALLOWED_ORIGIN=*` is temporary until Vercel is live.
-
-Deploy:
-
-```bash
-fly deploy
-```
-
-Watch logs:
-
-```bash
-fly logs
-```
-
-You should see:
+5. **Create Web Service** and wait for the deploy. Logs should show:
 
 ```
 migrations ok
-listening on :8080
+listening on :<port>
 ```
 
-Your API URL is `https://<app-name>.fly.dev`. Verify:
+6. Copy the service URL (e.g. `https://daystack-api.onrender.com`).
+
+Verify:
 
 ```bash
-curl https://<app-name>.fly.dev/health
+curl https://daystack-api.onrender.com/health
 # → ok
 ```
 
-**Troubleshooting DB connection**
+**Free tier behavior:** The service **spins down after 15 minutes** without traffic. The next request can take **~1 minute** to respond while it wakes up. Fine for a personal morning app; not ideal if you need instant API responses 24/7.
 
-- Supabase requires SSL. If `lib/pq` fails to connect, append `?sslmode=require` to `DATABASE_URL`.
-- If Fly cannot reach Supabase over IPv6, use Supabase’s **Session pooler** or **Transaction pooler** URI from the dashboard instead of direct, or enable IPv4 add-on on Supabase if needed.
+### Option B — Blueprint (`render.yaml`)
+
+The repo includes a root `render.yaml`. In the Render dashboard: **New +** → **Blueprint** → select the repo. Set `DATABASE_URL` when prompted (mark as secret). Adjust the service name if needed.
+
+### Troubleshooting DB connection
+
+- Append `?sslmode=require` to `DATABASE_URL` if `lib/pq` fails SSL handshake.
+- If direct connection fails from Render, use **Connect → Session pooler** on Supabase.
 
 ---
 
@@ -117,10 +115,10 @@ curl https://<app-name>.fly.dev/health
 **Environment variables:**
 
 ```
-VITE_API_URL = https://<app-name>.fly.dev
+VITE_API_URL = https://daystack-api.onrender.com
 ```
 
-No trailing slash.
+No trailing slash. Use your actual Render URL.
 
 4. **Deploy**. Copy the production URL (e.g. `https://daystack.vercel.app`).
 
@@ -128,31 +126,31 @@ No trailing slash.
 
 ## 4. Lock down CORS
 
-Back on Fly, set your real frontend origin:
+On Render → your web service → **Environment**:
 
-```bash
-fly secrets set ALLOWED_ORIGIN='https://daystack.vercel.app'
+```
+ALLOWED_ORIGIN = https://daystack.vercel.app
 ```
 
-Fly restarts the app with the new secret. The API only accepts browser requests from that origin.
+Save. Render redeploys automatically. The API only accepts browser requests from that origin.
 
 ---
 
 ## Environment variables reference
 
-### Backend (Fly secrets)
+### Backend (Render)
 
 | Variable | Required | Description |
 |---|---|---|
-| `DATABASE_URL` | Yes | Supabase Postgres URI (direct connection recommended) |
-| `PORT` | No | Set to `8080` in `fly.toml`; Fly injects it at runtime |
+| `DATABASE_URL` | Yes | Supabase Postgres URI from **Connect** |
+| `PORT` | No | Injected by Render at runtime |
 | `ALLOWED_ORIGIN` | No | CORS origin. Defaults to `*` if unset. Set to your Vercel URL in prod. |
 
 ### Frontend (Vercel)
 
 | Variable | Required | Description |
 |---|---|---|
-| `VITE_API_URL` | Yes | Full URL of the Fly backend, no trailing slash |
+| `VITE_API_URL` | Yes | Full URL of the Render backend, no trailing slash |
 
 ---
 
@@ -160,22 +158,24 @@ Fly restarts the app with the new secret. The API only accepts browser requests 
 
 | Part | Trigger |
 |---|---|
-| Backend | `cd backend && fly deploy` (or push if you wired GitHub Actions later) |
-| Frontend | Push to the connected branch; Vercel redeploys automatically |
-| Migrations | Run on every backend boot. Add a file under `backend/db/migrations/` and redeploy Fly |
+| Backend | Push to the connected branch; Render auto-deploys |
+| Frontend | Push to the connected branch; Vercel auto-deploys |
+| Migrations | Run on every backend boot. Add a file under `backend/db/migrations/` and redeploy Render |
 
 ---
 
 ## Custom domains (optional)
 
-**Vercel:** Project → Settings → Domains. Update `ALLOWED_ORIGIN` on Fly to match.
+**Vercel:** Project → Settings → Domains. Update `ALLOWED_ORIGIN` on Render to match.
 
-**Fly:** `fly certs add your-api.example.com` then follow the DNS instructions. Update `VITE_API_URL` on Vercel if the API hostname changes.
+**Render:** Service → Settings → Custom Domains. Update `VITE_API_URL` on Vercel if the API hostname changes.
 
 ---
 
 ## Cost notes (personal app)
 
-- **Supabase:** free tier includes a hosted Postgres project (limits apply; see their pricing page).
-- **Fly.io:** pay-as-you-go; small VMs can stay cheap with `auto_stop_machines` (cold start on first request).
-- **Vercel:** hobby/free tier is usually enough for a static Vite frontend.
+- **Supabase:** free tier for hosted Postgres (limits apply).
+- **Render:** **Free** web service instance ($0 compute). Spins down when idle; **750 instance hours/month** per workspace while running. Not intended for production per Render, but fine for a personal tool. Outbound bandwidth and build minutes have monthly caps on Hobby.
+- **Vercel:** hobby/free tier is usually enough for the static Vite frontend.
+
+Do **not** use Render’s free Postgres for DayStack (it **expires after 30 days**). Supabase is the database.

@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	// Load .env when running locally. On Fly.io, env vars are injected as secrets,
+	// Load .env when running locally. On Render, env vars are set in the dashboard,
 	// so godotenv gracefully does nothing if the file is absent.
 	_ = godotenv.Load()
 

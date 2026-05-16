@@ -6,7 +6,7 @@ Personal daily planning app. Label each day of the week (Full / Half / Light), s
 
 | Layer | Tech | Hosting |
 |---|---|---|
-| Backend | Go + chi router | Fly.io |
+| Backend | Go + chi router | Render |
 | Database | PostgreSQL | Supabase |
 | Frontend | React + Vite | Vercel |
 

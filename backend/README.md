@@ -272,4 +272,4 @@ curl http://localhost:8080/health
 | Router | chi v5 |
 | Database | PostgreSQL via `lib/pq` |
 | Config | godotenv (local), env vars (prod) |
-| Deploy | Fly.io (DB: Supabase) |
+| Deploy | Render (DB: Supabase) |

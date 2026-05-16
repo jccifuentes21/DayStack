@@ -1,0 +1,17 @@
+# Render Blueprint — optional. Dashboard deploy works without this file.
+# New + → Blueprint → select repo, then set DATABASE_URL when prompted.
+
+services:
+  - type: web
+    name: daystack-api
+    runtime: go
+    plan: free
+    rootDir: backend
+    buildCommand: go build -o server .
+    startCommand: ./server
+    healthCheckPath: /health
+    envVars:
+      - key: ALLOWED_ORIGIN
+        value: "*"
+      - key: DATABASE_URL
+        sync: false
