@@ -1,0 +1,5 @@
+packages:
+  - path: "daystack/models"
+    type_mappings:
+      time.Time: string
+    output_path: "../frontend/src/types/api.ts"

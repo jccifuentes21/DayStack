@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	// Load .env when running locally. On Railway the env vars are injected directly,
+	// Load .env when running locally. On Fly.io, env vars are injected as secrets,
 	// so godotenv gracefully does nothing if the file is absent.
 	_ = godotenv.Load()
 
@@ -39,10 +39,12 @@ func main() {
 	})
 
 	r.Route("/api", func(r chi.Router) {
-		r.Get("/weeks/current", handlers.GetCurrentWeek(database))
-		r.Get("/weeks/{week_start}", handlers.GetWeekByStart(database))
+		r.Get("/weeks", handlers.GetWeek(database))
 		r.Patch("/days/{id}", handlers.UpdateDay(database))
+		r.Post("/days/{id}/reset", handlers.ResetDay(database))
+		r.Post("/days/{id}/tasks", handlers.CreateTask(database))
 		r.Patch("/tasks/{id}", handlers.UpdateTask(database))
+		r.Delete("/tasks/{id}", handlers.DeleteTask(database))
 	})
 
 	port := os.Getenv("PORT")

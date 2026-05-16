@@ -1,0 +1,22 @@
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Go
+backend/tmp/
+backend/__debug_bin*
+*.exe
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

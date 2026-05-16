@@ -6,5 +6,6 @@ type Day struct {
 	DayType  string `json:"day_type"`  // "full" | "half" | "light" | "unset"
 	WakeTime string `json:"wake_time"` // "08:30" or ""
 	Notes    string `json:"notes"`
+	Focus    string `json:"focus"`
 	Tasks    []Task `json:"tasks"`
 }

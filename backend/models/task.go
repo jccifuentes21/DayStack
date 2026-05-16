@@ -5,4 +5,5 @@ type Task struct {
 	Label     string `json:"label"`
 	Completed bool   `json:"completed"`
 	SortOrder int    `json:"sort_order"`
+	Source    string `json:"source"` // "template" | "custom"
 }

@@ -1,0 +1,142 @@
+@import "tailwindcss";
+
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap");
+
+/* ─── Design tokens ─────────────────────────────────────────────────────── */
+:root {
+  /* Dark-first. Not dark "because tools look cool dark" — dark because the
+     person who built this hates light themes and this is their personal tool. */
+
+  --bg:        oklch(21%  0.010 250);   /* dark slate, not pitch black */
+  --surface:   oklch(26%  0.010 250);   /* cards / panels */
+  --surface-2: oklch(30%  0.010 250);   /* hover states, nested surfaces */
+  --border:    oklch(35%  0.008 250);   /* dividers, input borders */
+  --text-1:    oklch(93%  0.005 250);   /* primary — near-white, barely tinted */
+  --text-2:    oklch(65%  0.008 250);   /* secondary — muted labels */
+  --text-3:    oklch(47%  0.006 250);   /* placeholder / disabled */
+
+  /* One accent — Steady Emerald. Earns its place. Used sparingly. */
+  --accent:    oklch(60%  0.170 145);
+  --accent-bg: oklch(27%  0.055 145);
+
+  /* Day type palette — bright enough to read on dark, not loud */
+  --full:      oklch(62%  0.170 145);   /* emerald */
+  --full-bg:   oklch(27%  0.060 145);
+  --half:      oklch(70%  0.130 65);    /* amber */
+  --half-bg:   oklch(27%  0.055 65);
+  --light:     oklch(65%  0.120 220);   /* sky */
+  --light-bg:  oklch(27%  0.045 220);
+
+  /* Easing — Emil's custom curves, much punchier than browser defaults */
+  --ease-out:     cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out:  cubic-bezier(0.77, 0, 0.175, 1);
+
+  /* Typography */
+  --font-sans: "Geist", system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+}
+
+/* ─── Reset ─────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  background: var(--bg);
+  color: var(--text-1);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+body { margin: 0; }
+
+#root {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── Scrollbar ─────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+/* ─── Toastify overrides — match design system exactly ──────────────────── */
+:root {
+  --toastify-color-dark:       var(--surface);
+  --toastify-text-color-dark:  var(--text-1);
+  --toastify-font-family:      var(--font-sans);
+  --toastify-border-radius:    10px;
+  --toastify-z-index:          9999;
+}
+
+.Toastify__toast {
+  border: 1px solid var(--border);
+  box-shadow: none;
+  padding: 12px 14px;
+  min-height: unset;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.Toastify__toast-icon {
+  width: 16px;
+  margin-right: 10px;
+}
+
+.Toastify__progress-bar--dark {
+  background: var(--accent);
+}
+
+.Toastify__close-button--dark {
+  color: var(--text-3);
+  opacity: 1;
+}
+
+.Toastify__close-button--dark:hover {
+  color: var(--text-2);
+}
+
+@keyframes ds-saved-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.ds-saved-check {
+  flex-shrink: 0;
+  color: var(--accent);
+  animation: ds-saved-pop-in 220ms var(--ease-out) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-saved-check {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Mobile: full-width toasts pinned to top */
+@media (max-width: 480px) {
+  .Toastify__toast-container--top-right {
+    top: 0;
+    right: 0;
+    left: 0;
+    width: 100%;
+    padding: 0;
+  }
+
+  .Toastify__toast {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    margin-bottom: 0;
+  }
+}

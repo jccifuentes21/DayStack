@@ -39,6 +39,7 @@ type updateDayRequest struct {
 	DayType  *string `json:"day_type"`
 	WakeTime *string `json:"wake_time"`
 	Notes    *string `json:"notes"`
+	Focus    *string `json:"focus"`
 }
 
 // UpdateDay handles PATCH /api/days/{id}.
@@ -89,6 +90,11 @@ func UpdateDay(db *sql.DB) http.HandlerFunc {
 			args = append(args, *req.Notes)
 			n++
 		}
+		if req.Focus != nil {
+			setClauses = append(setClauses, fmt.Sprintf("focus = $%d", n))
+			args = append(args, *req.Focus)
+			n++
+		}
 		if len(setClauses) > 0 {
 			args = append(args, id)
 			query := fmt.Sprintf("UPDATE days SET %s WHERE id = $%d",
@@ -120,6 +126,47 @@ func UpdateDay(db *sql.DB) http.HandlerFunc {
 	}
 }
 
+// ResetDay handles POST /api/days/{id}/reset.
+// Clears day_type back to unset, wipes focus, and deletes all tasks.
+func ResetDay(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id, err := strconv.Atoi(chi.URLParam(r, "id"))
+		if err != nil {
+			jsonError(w, 400, "invalid day id")
+			return
+		}
+
+		tx, err := db.Begin()
+		if err != nil {
+			jsonError(w, 500, err.Error())
+			return
+		}
+		defer tx.Rollback()
+
+		if _, err := tx.Exec(
+			`UPDATE days SET day_type = 'unset', wake_time = '', focus = '', notes = '' WHERE id = $1`, id,
+		); err != nil {
+			jsonError(w, 500, err.Error())
+			return
+		}
+		if _, err := tx.Exec(`DELETE FROM tasks WHERE day_id = $1`, id); err != nil {
+			jsonError(w, 500, err.Error())
+			return
+		}
+		if err := tx.Commit(); err != nil {
+			jsonError(w, 500, err.Error())
+			return
+		}
+
+		day, err := loadDay(db, id)
+		if err != nil {
+			jsonError(w, 500, err.Error())
+			return
+		}
+		jsonOK(w, day)
+	}
+}
+
 // regenerateTasks deletes all tasks for a day and inserts fresh ones from the template.
 // Called whenever day_type changes.
 func regenerateTasks(db *sql.DB, dayID int, dayType string) error {
@@ -129,13 +176,13 @@ func regenerateTasks(db *sql.DB, dayID int, dayType string) error {
 	}
 	defer tx.Rollback()
 
-	if _, err := tx.Exec(`DELETE FROM tasks WHERE day_id = $1`, dayID); err != nil {
+	if _, err := tx.Exec(`DELETE FROM tasks WHERE day_id = $1 AND source = 'template'`, dayID); err != nil {
 		return err
 	}
 
 	for i, label := range taskTemplates[dayType] {
 		_, err := tx.Exec(
-			`INSERT INTO tasks (day_id, label, sort_order) VALUES ($1, $2, $3)`,
+			`INSERT INTO tasks (day_id, label, sort_order, source) VALUES ($1, $2, $3, 'template')`,
 			dayID, label, i,
 		)
 		if err != nil {
@@ -149,12 +196,12 @@ func regenerateTasks(db *sql.DB, dayID int, dayType string) error {
 // loadDay returns a single Day with its tasks.
 func loadDay(db *sql.DB, dayID int) (*models.Day, error) {
 	rows, err := db.Query(`
-		SELECT d.id, d.date, d.day_type, COALESCE(d.wake_time,''), COALESCE(d.notes,''),
-		       t.id, t.label, t.completed, t.sort_order
+		SELECT d.id, d.date, d.day_type, COALESCE(d.wake_time,''), COALESCE(d.notes,''), COALESCE(d.focus,''),
+		       t.id, t.label, t.completed, t.sort_order, COALESCE(t.source,'template')
 		FROM days d
 		LEFT JOIN tasks t ON t.day_id = d.id
 		WHERE d.id = $1
-		ORDER BY t.sort_order
+		ORDER BY t.source DESC, t.sort_order
 	`, dayID)
 	if err != nil {
 		return nil, err
@@ -169,13 +216,15 @@ func loadDay(db *sql.DB, dayID int) (*models.Day, error) {
 			dayType  string
 			wakeTime string
 			notes    string
+			focus    string
 			taskID   sql.NullInt64
 			label    sql.NullString
 			done     sql.NullBool
 			order    sql.NullInt64
+			source   sql.NullString
 		)
-		if err := rows.Scan(&id, &date, &dayType, &wakeTime, &notes,
-			&taskID, &label, &done, &order); err != nil {
+		if err := rows.Scan(&id, &date, &dayType, &wakeTime, &notes, &focus,
+			&taskID, &label, &done, &order, &source); err != nil {
 			return nil, err
 		}
 		if day == nil {
@@ -185,6 +234,7 @@ func loadDay(db *sql.DB, dayID int) (*models.Day, error) {
 				DayType:  dayType,
 				WakeTime: wakeTime,
 				Notes:    notes,
+				Focus:    focus,
 				Tasks:    []models.Task{},
 			}
 		}
@@ -194,6 +244,7 @@ func loadDay(db *sql.DB, dayID int) (*models.Day, error) {
 				Label:     label.String,
 				Completed: done.Bool,
 				SortOrder: int(order.Int64),
+				Source:    source.String,
 			})
 		}
 	}

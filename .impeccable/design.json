@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-15T00:00:00Z",
+  "title": "Design System: DayStack",
+  "extensions": {
+    "colorMeta": {
+      "bg":         { "role": "neutral",  "displayName": "Near-Black Canvas",   "canonical": "oklch(13% 0.010 250)", "tonalRamp": ["oklch(8% 0.008 250)","oklch(13% 0.010 250)","oklch(17% 0.010 250)","oklch(21% 0.010 250)","oklch(26% 0.010 250)","oklch(40% 0.008 250)","oklch(62% 0.008 250)","oklch(93% 0.005 250)"] },
+      "surface":    { "role": "neutral",  "displayName": "Elevated Surface",    "canonical": "oklch(17% 0.010 250)", "tonalRamp": ["oklch(8% 0.008 250)","oklch(13% 0.010 250)","oklch(17% 0.010 250)","oklch(21% 0.010 250)","oklch(26% 0.010 250)","oklch(40% 0.008 250)","oklch(62% 0.008 250)","oklch(93% 0.005 250)"] },
+      "accent":     { "role": "primary",  "displayName": "Steady Emerald",      "canonical": "oklch(57% 0.170 145)", "tonalRamp": ["oklch(15% 0.04 145)","oklch(20% 0.05 145)","oklch(28% 0.08 145)","oklch(38% 0.12 145)","oklch(47% 0.15 145)","oklch(57% 0.17 145)","oklch(68% 0.15 145)","oklch(82% 0.10 145)"] },
+      "full":       { "role": "semantic", "displayName": "Full Day Emerald",    "canonical": "oklch(60% 0.170 145)", "tonalRamp": ["oklch(15% 0.04 145)","oklch(19% 0.055 145)","oklch(28% 0.08 145)","oklch(38% 0.12 145)","oklch(48% 0.15 145)","oklch(60% 0.17 145)","oklch(70% 0.15 145)","oklch(83% 0.10 145)"] },
+      "half":       { "role": "semantic", "displayName": "Focused Amber",       "canonical": "oklch(68% 0.130 65)",  "tonalRamp": ["oklch(15% 0.04 65)","oklch(19% 0.05 65)","oklch(28% 0.07 65)","oklch(38% 0.09 65)","oklch(50% 0.11 65)","oklch(68% 0.13 65)","oklch(76% 0.12 65)","oklch(88% 0.07 65)"] },
+      "light":      { "role": "semantic", "displayName": "Clear Sky",           "canonical": "oklch(63% 0.120 220)", "tonalRamp": ["oklch(15% 0.03 220)","oklch(19% 0.04 220)","oklch(28% 0.06 220)","oklch(38% 0.09 220)","oklch(48% 0.10 220)","oklch(63% 0.12 220)","oklch(73% 0.10 220)","oklch(86% 0.06 220)"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display / Label",  "purpose": "Section labels, day type badges, week navigation. Uppercase only." },
+      "body":    { "displayName": "Body",              "purpose": "Task labels, notes, schedule descriptions. Primary reading text." },
+      "label":   { "displayName": "Label",             "purpose": "Day names, card headers, UI controls." },
+      "mono":    { "displayName": "Mono (Times/Data)", "purpose": "All time strings and date values. Never use sans-serif for a time." }
+    },
+    "shadows": [
+      { "name": "overlay", "value": "0 8px 24px oklch(0% 0 0 / 0.4)", "purpose": "Floating overlays only: dropdowns, tooltips. Nothing else uses shadows." }
+    ],
+    "motion": [
+      { "name": "ease-out",    "value": "cubic-bezier(0.23, 1, 0.32, 1)",    "purpose": "All UI interactions — entering, pressing, selecting. Default for everything." },
+      { "name": "ease-in-out", "value": "cubic-bezier(0.77, 0, 0.175, 1)",   "purpose": "On-screen movement: day panel slide, week strip scroll." }
+    ],
+    "breakpoints": [
+      { "name": "mobile",  "value": "< 768px",  "note": "Single column. Week strip scrolls horizontally. Day panel stacks below." },
+      { "name": "desktop", "value": ">= 768px", "note": "Week strip top, day panel main content area below." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Day Type Pill — Full",
+      "kind": "chip",
+      "refersTo": "day-type-full",
+      "description": "Indicates a Full day. Emerald text on dark emerald tint.",
+      "html": "<span class=\"ds-pill-full\">Full</span>",
+      "css": ".ds-pill-full { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 99px; background: oklch(19% 0.055 145); color: oklch(60% 0.17 145); font-family: 'Geist', system-ui, sans-serif; font-size: 13px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; }"
+    },
+    {
+      "name": "Day Type Pill — Half",
+      "kind": "chip",
+      "refersTo": "day-type-half",
+      "description": "Indicates a Half day. Amber text on dark amber tint.",
+      "html": "<span class=\"ds-pill-half\">Half</span>",
+      "css": ".ds-pill-half { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 99px; background: oklch(19% 0.050 65); color: oklch(68% 0.13 65); font-family: 'Geist', system-ui, sans-serif; font-size: 13px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; }"
+    },
+    {
+      "name": "Day Type Pill — Light",
+      "kind": "chip",
+      "refersTo": "day-type-light",
+      "description": "Indicates a Light day. Sky text on dark sky tint.",
+      "html": "<span class=\"ds-pill-light\">Light</span>",
+      "css": ".ds-pill-light { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 99px; background: oklch(19% 0.040 220); color: oklch(63% 0.12 220); font-family: 'Geist', system-ui, sans-serif; font-size: 13px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; }"
+    },
+    {
+      "name": "Task Checkbox — Unchecked",
+      "kind": "custom",
+      "refersTo": "task-checkbox",
+      "description": "18px square, 6px radius. Muted until checked.",
+      "html": "<div class=\"ds-checkbox\"></div>",
+      "css": ".ds-checkbox { width: 18px; height: 18px; border-radius: 6px; background: oklch(21% 0.010 250); border: 1px solid oklch(26% 0.010 250); transition: background 120ms cubic-bezier(0.23,1,0.32,1), border-color 120ms cubic-bezier(0.23,1,0.32,1); cursor: pointer; } .ds-checkbox:hover { border-color: oklch(57% 0.170 145); }"
+    },
+    {
+      "name": "Task Checkbox — Checked",
+      "kind": "custom",
+      "refersTo": "task-checkbox-checked",
+      "description": "Emerald fill + checkmark on completion.",
+      "html": "<div class=\"ds-checkbox ds-checkbox--checked\"><svg width=\"10\" height=\"8\" viewBox=\"0 0 10 8\" fill=\"none\"><path d=\"M1 4l2.5 2.5L9 1\" stroke=\"oklch(57% 0.170 145)\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></div>",
+      "css": ".ds-checkbox--checked { background: oklch(20% 0.050 145); border-color: oklch(57% 0.170 145); display: flex; align-items: center; justify-content: center; }"
+    },
+    {
+      "name": "Wake Time Input",
+      "kind": "input",
+      "description": "Time input in Geist Mono. Border shifts to accent on focus.",
+      "html": "<input class=\"ds-time-input\" type=\"time\" value=\"08:30\" />",
+      "css": ".ds-time-input { background: oklch(21% 0.010 250); color: oklch(93% 0.005 250); border: 1px solid oklch(26% 0.010 250); border-radius: 6px; padding: 6px 10px; font-family: 'Geist Mono', monospace; font-size: 13px; outline: none; transition: border-color 150ms cubic-bezier(0.23,1,0.32,1); } .ds-time-input:focus { border-color: oklch(57% 0.170 145); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Zero Friction Day",
+    "overview": "DayStack exists at the intersection of a training log and a flight preflight check. You open it in the morning, configure once, and the rest of the day you're executing — not planning. The interface has one job: show you what you need, stay out of the way, and never require more than two taps to get there.\n\nThe system is dark because its user is. Not dark for aesthetics, not dark to feel like a tool — dark because light themes are friction, and this app eliminates friction by definition. Every surface is deep, slightly cool-tinted, and exactly one tone above its neighbor. Depth comes from tonal layering, not shadows.\n\nWarmth enters through the accent palette: Steady Emerald for productive momentum, Focused Amber for half days, Clear Sky for rest days. These are working colors — not celebration colors.",
+    "keyCharacteristics": [
+      "Dark-first, single theme. No toggle.",
+      "Tonal layering: bg / surface / surface-2 / border — four steps, no shadows.",
+      "One accent (Steady Emerald). Today, active state, completion only.",
+      "Day-type color on indicators only. Never large surfaces.",
+      "Geist Mono strictly for times and numbers.",
+      "Zero decoration."
+    ],
+    "rules": [
+      { "name": "The One Accent Rule",       "body": "Steady Emerald appears on today, active state, and task completion. Three uses. No more.", "section": "colors" },
+      { "name": "The Tonal Steps Rule",      "body": "Depth is expressed through tonal surface steps, never through shadows. Reach for a surface step before a shadow.", "section": "elevation" },
+      { "name": "The Mono Gate Rule",        "body": "Times, dates, and numbers use Geist Mono. Everything else uses Geist sans. No exceptions.", "section": "typography" },
+      { "name": "The Flat-by-Default Rule",  "body": "Shadows appear only on floating overlays. Everything else is flat — depth from surface steps.", "section": "elevation" }
+    ],
+    "dos": [
+      "Use --surface as the background for all day cards and panels — never --bg directly on content.",
+      "Use Geist Mono for every time string in the schedule.",
+      "Apply scale(0.97) on :active for all clickable elements — 120ms --ease-out.",
+      "Use day-type color tokens exclusively for indicators: pills, dots, badges.",
+      "Keep Steady Emerald to today, active state, and completion only.",
+      "Express depth through surface steps, not shadows.",
+      "Use transition with --ease-out on every interactive element."
+    ],
+    "donts": [
+      "Don't use a light theme. One mode only.",
+      "Don't add gamification — no streak counters, no completion rings, no confetti.",
+      "Don't make this look like a generic SaaS dashboard (white cards, blue buttons, Inter font).",
+      "Don't make this look like Notion (block editing, cluttered sidebars).",
+      "Don't use border-left or border-right > 1px as a colored accent stripe.",
+      "Don't use gradient text.",
+      "Don't add illustrations or decorative empty-state artwork.",
+      "Don't animate layout properties (height, width, padding, margin).",
+      "Don't use the same padding everywhere — vary spacing for rhythm."
+    ]
+  }
+}
