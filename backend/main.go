@@ -35,6 +35,14 @@ func main() {
 	r.Use(corsMiddleware)
 
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		// Pinging the DB (not just the process) here means the daily Vercel Cron
+		// hit against this route also counts as Supabase traffic, keeping the
+		// free-tier project from pausing due to inactivity.
+		if err := database.Ping(); err != nil {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.Write([]byte("db unreachable"))
+			return
+		}
 		w.Write([]byte("ok"))
 	})
 

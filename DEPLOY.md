@@ -87,6 +87,21 @@ Migration SQL files are embedded into the Go binary at compile time (`//go:embed
 
 ---
 
+## Keeping Supabase awake
+
+The Go service itself is persistent (no cold starts), but Supabase's free tier pauses a project after about a week of no database activity. `vercel.json` defines a daily [Vercel Cron](https://vercel.com/docs/cron-jobs) that hits `GET /api/health`, which pings the database (`database.Ping()` in `backend/main.go`) before responding — so the cron's only job is to generate real DB traffic once a day.
+
+```json
+"crons": [{ "path": "/api/health", "schedule": "0 12 * * *" }]
+```
+
+Notes:
+- Cron jobs run against your **production** deployment only, not previews.
+- On Vercel's Hobby plan, cron jobs are limited to once per day and a max of 2 crons per project — daily is exactly what this needs, so no upgrade required.
+- Verify it's registered: Project → **Settings → Cron Jobs** in the Vercel dashboard, after the next deploy.
+
+---
+
 ## Environment variables reference
 
 ### Backend (Vercel service `api`)
