@@ -4,14 +4,19 @@ Go REST API for a personal daily planning app. Manages weeks, days, and tasks wi
 
 ## API Endpoints Overview
 
+Routes as registered by the Go server. In production, Vercel routes `/api/*` to
+this service and strips the `/api` prefix before forwarding, so a browser
+request to `/api/weeks` arrives here as `/weeks`. Locally the server is hit
+directly at these paths (no `/api` prefix).
+
 ```
 GET    /health
-GET    /api/weeks?offset=0
-PATCH  /api/days/{id}
-POST   /api/days/{id}/reset
-POST   /api/days/{id}/tasks
-PATCH  /api/tasks/{id}
-DELETE /api/tasks/{id}
+GET    /weeks?offset=0
+PATCH  /days/{id}
+POST   /days/{id}/reset
+POST   /days/{id}/tasks
+PATCH  /tasks/{id}
+DELETE /tasks/{id}
 ```
 
 ---
@@ -24,7 +29,7 @@ Liveness check. Returns `ok` as plain text.
 
 ---
 
-### `GET /api/weeks?offset=0`
+### `GET /weeks?offset=0`
 
 Returns a week relative to the current week. `offset=0` (or omitted) is this week, `offset=-1` is last week, `offset=1` is next week. Creates the week and all 7 day records if they don't exist yet.
 
@@ -32,9 +37,9 @@ Returns a week relative to the current week. `offset=0` (or omitted) is this wee
 
 **Examples:**
 ```
-GET /api/weeks           → current week
-GET /api/weeks?offset=-1 → last week
-GET /api/weeks?offset=2  → two weeks from now
+GET /weeks           → current week
+GET /weeks?offset=-1 → last week
+GET /weeks?offset=2  → two weeks from now
 ```
 
 **Response:** `Week` object with nested `days` and their `tasks`.
@@ -59,7 +64,7 @@ GET /api/weeks?offset=2  → two weeks from now
 
 ---
 
-### `PATCH /api/days/{id}`
+### `PATCH /days/{id}`
 
 Partial update on a day. Only fields present in the request body are changed — omitted fields are left untouched.
 
@@ -89,7 +94,7 @@ If `day_type` changes, template tasks for the old type are deleted and regenerat
 
 ---
 
-### `POST /api/days/{id}/reset`
+### `POST /days/{id}/reset`
 
 Wipes a day back to its initial state: `day_type` → `"unset"`, `wake_time` → `""`, `focus` → `""`, `notes` → `""`, and deletes all tasks (both template and custom).
 
@@ -104,7 +109,7 @@ No request body required.
 
 ---
 
-### `POST /api/days/{id}/tasks`
+### `POST /days/{id}/tasks`
 
 Creates a custom task for a day. Custom tasks appear below template tasks and can be deleted individually. Template tasks cannot be deleted this way.
 
@@ -136,7 +141,7 @@ Creates a custom task for a day. Custom tasks appear below template tasks and ca
 
 ---
 
-### `PATCH /api/tasks/{id}`
+### `PATCH /tasks/{id}`
 
 Toggles or sets the `completed` field on a task. Works on both template and custom tasks.
 
@@ -157,7 +162,7 @@ Toggles or sets the `completed` field on a task. Works on both template and cust
 
 ---
 
-### `DELETE /api/tasks/{id}`
+### `DELETE /tasks/{id}`
 
 Deletes a custom task. Template tasks are protected — attempting to delete one returns 404.
 
@@ -241,7 +246,7 @@ Migrations run automatically on every server boot via `db.RunMigrations`. All st
 ```env
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/daystack?sslmode=disable
 PORT=8080                              # optional, defaults to 8080
-ALLOWED_ORIGIN=https://your-app.vercel.app  # optional, defaults to * in dev
+ALLOWED_ORIGIN=http://localhost:5173   # optional, only relevant when frontend and backend run on different local ports; same-origin in prod
 ```
 
 ---
@@ -251,7 +256,7 @@ ALLOWED_ORIGIN=https://your-app.vercel.app  # optional, defaults to * in dev
 **Run the server:**
 ```bash
 cd backend
-go run main.go
+go run .
 ```
 
 Migrations run automatically on startup. No manual setup needed beyond a running Postgres instance and a valid `DATABASE_URL` in `.env`.
@@ -272,4 +277,4 @@ curl http://localhost:8080/health
 | Router | chi v5 |
 | Database | PostgreSQL via `lib/pq` |
 | Config | godotenv (local), env vars (prod) |
-| Deploy | Render (DB: Supabase) |
+| Deploy | Vercel Services (DB: Supabase) |

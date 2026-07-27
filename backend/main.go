@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	// Load .env when running locally. On Render, env vars are set in the dashboard,
+	// Load .env when running locally. On Vercel, env vars are set in the dashboard,
 	// so godotenv gracefully does nothing if the file is absent.
 	_ = godotenv.Load()
 
@@ -38,14 +38,14 @@ func main() {
 		w.Write([]byte("ok"))
 	})
 
-	r.Route("/api", func(r chi.Router) {
-		r.Get("/weeks", handlers.GetWeek(database))
-		r.Patch("/days/{id}", handlers.UpdateDay(database))
-		r.Post("/days/{id}/reset", handlers.ResetDay(database))
-		r.Post("/days/{id}/tasks", handlers.CreateTask(database))
-		r.Patch("/tasks/{id}", handlers.UpdateTask(database))
-		r.Delete("/tasks/{id}", handlers.DeleteTask(database))
-	})
+	// Registered without an /api prefix: Vercel Services strips the routePrefix
+	// before forwarding to this service, so it must arrive here already stripped.
+	r.Get("/weeks", handlers.GetWeek(database))
+	r.Patch("/days/{id}", handlers.UpdateDay(database))
+	r.Post("/days/{id}/reset", handlers.ResetDay(database))
+	r.Post("/days/{id}/tasks", handlers.CreateTask(database))
+	r.Patch("/tasks/{id}", handlers.UpdateTask(database))
+	r.Delete("/tasks/{id}", handlers.DeleteTask(database))
 
 	port := os.Getenv("PORT")
 	if port == "" {
